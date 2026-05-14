@@ -9,15 +9,18 @@ from fast_api_app.models import ProjectRead
 client = TestClient(app)
 
 
-def serialize_project(project: dict[str, object]) -> dict[str, object]:
-    return ProjectRead(**project).model_dump(mode="json")
+def serialize_project(project: ProjectRead) -> dict[str, object]:
+    return project.model_dump(mode="json")
 
 
-def serialize_projects(projects: list[dict[str, object]]) -> list[dict[str, object]]:
+def serialize_projects(projects: list[ProjectRead]) -> list[dict[str, object]]:
     return [serialize_project(project) for project in projects]
 
 
 class ProjectEndpointTests(TestCase):
+    def test_mock_database_returns_project_read_models(self) -> None:
+        self.assertIsInstance(mock_database()[1], ProjectRead)
+
     def test_get_projects_returns_all_mock_projects(self) -> None:
         response = client.get("/projects")
 
@@ -33,7 +36,7 @@ class ProjectEndpointTests(TestCase):
     def test_get_projects_filters_by_slug(self) -> None:
         project = mock_database()[1]
 
-        response = client.get("/projects", params={"slug": project["slug"]})
+        response = client.get("/projects", params={"slug": project.slug})
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), [serialize_project(project)])
@@ -47,7 +50,7 @@ class ProjectEndpointTests(TestCase):
     def test_get_project_returns_matching_project(self) -> None:
         project = mock_database()[1]
 
-        response = client.get("/project", params={"project_id": project["id"]})
+        response = client.get("/project", params={"project_id": project.id})
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), serialize_project(project))

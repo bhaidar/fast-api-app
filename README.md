@@ -11,8 +11,8 @@ FastAPI's `TestClient`.
 - A FastAPI ASGI app at `src/fast_api_app/main.py`.
 - A configured FastAPI CLI entrypoint:
   `fast_api_app.main:app`.
-- A mock in-memory project database.
-- A `Project` Pydantic response model.
+- A mock in-memory project database that returns `ProjectRead` models.
+- SQLModel project table and API schema models in `src/fast_api_app/models.py`.
 - Endpoint tests for project listing, filtering, lookup, and not-found
   behavior.
 - A guide in `docs/uv-fastapi-package-guide.md` that documents how the project
@@ -103,6 +103,26 @@ PostgreSQL connection with these settings:
 | Database | `fastapi_app` |
 | User | `fastapi` |
 | Password | `fastapi` |
+
+## SQLModel models
+
+The app uses SQLModel in `src/fast_api_app/models.py` for database-ready models
+and API schemas. PostgreSQL is available locally through Podman, but the routes
+still use typed mock data until the database integration is wired into the app.
+
+- `ProjectName`: constrained string type that trims whitespace and requires at
+  least two characters.
+- `ProjectBase`: shared project fields used by write models, currently `name`
+  and optional `description`.
+- `Project`: database table model for the `projects` table, with `id`, unique
+  `slug`, and timezone-aware `created_at`.
+- `ProjectCreate`: create payload with client-provided `name` and optional
+  `description`; `slug` is intentionally omitted because it will be derived from
+  the name.
+- `ProjectUpdate`: partial update payload where `name`, `description`, and
+  `slug` are optional.
+- `ProjectRead`: response schema used by the read endpoints, with `id`, `name`,
+  `slug`, and `created_at`.
 
 ## Run the app
 
@@ -209,10 +229,12 @@ No lint command is configured in `pyproject.toml` yet.
 ├── src/
 │   └── fast_api_app/
 │       ├── __init__.py
+│       ├── models.py
 │       └── main.py
 ├── tests/
 │   ├── __init__.py
-│   └── test_main.py
+│   ├── test_main.py
+│   └── test_models.py
 ├── .env.postgres.example
 ├── pyproject.toml
 ├── uv.lock

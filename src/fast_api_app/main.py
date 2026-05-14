@@ -10,29 +10,26 @@ app = FastAPI(
 )
 
 
-ProjectData = dict[str, int | str | datetime | None]
-
-
-def mock_database() -> dict[int, ProjectData]:
+def mock_database() -> dict[int, ProjectRead]:
     return {
-        1: {
-            "id": 1,
-            "name": "Project 1",
-            "slug": "project-1",
-            "created_at": datetime(2026, 1, 1, tzinfo=UTC),
-        },
-        2: {
-            "id": 2,
-            "name": "Project 2",
-            "slug": "project-2",
-            "created_at": datetime(2026, 1, 2, tzinfo=UTC),
-        },
-        3: {
-            "id": 3,
-            "name": "Project 3",
-            "slug": "project-3",
-            "created_at": datetime(2026, 1, 3, tzinfo=UTC),
-        },
+        1: ProjectRead(
+            id=1,
+            name="Project 1",
+            slug="project-1",
+            created_at=datetime(2026, 1, 1, tzinfo=UTC),
+        ),
+        2: ProjectRead(
+            id=2,
+            name="Project 2",
+            slug="project-2",
+            created_at=datetime(2026, 1, 2, tzinfo=UTC),
+        ),
+        3: ProjectRead(
+            id=3,
+            name="Project 3",
+            slug="project-3",
+            created_at=datetime(2026, 1, 3, tzinfo=UTC),
+        ),
     }
 
 
@@ -40,13 +37,13 @@ def mock_database() -> dict[int, ProjectData]:
 def get_project(project_id: int) -> ProjectRead:
     project = mock_database().get(project_id)
     if project is not None:
-        return ProjectRead(**project)
+        return project
     raise HTTPException(status_code=404, detail="Project not found")
 
 
 @app.get("/projects", response_model=list[ProjectRead])
 def get_projects(slug: str | None = None) -> list[ProjectRead]:
-    projects = [ProjectRead(**project) for project in mock_database().values()]
+    projects = list(mock_database().values())
     if slug is None:
         return projects
 
