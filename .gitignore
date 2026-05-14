@@ -10,6 +10,7 @@ wheels/
 .venv
 
 # Local environment files
+.env
 .env.postgres
 
 # Local git worktrees
