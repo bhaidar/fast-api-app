@@ -21,6 +21,10 @@ class ProjectBase(SQLModel):
     description: str | None = None
 
 
+class ProjectCreate(ProjectBase):
+    slug: str
+
+
 class Project(ProjectBase, table=True):
     __tablename__ = "projects"
 
@@ -35,4 +39,10 @@ class Project(ProjectBase, table=True):
 class ProjectRead(SQLModel):
     id: int
     name: ProjectName
+    slug: str | None = None
+
+
+class ProjectUpdate(SQLModel):
+    name: ProjectName | None = None
+    description: str | None = None
     slug: str | None = None

@@ -3,7 +3,7 @@ from unittest import TestCase
 
 from pydantic import ValidationError
 
-from fast_api_app.models import Project, ProjectRead
+from fast_api_app.models import Project, ProjectCreate, ProjectRead, ProjectUpdate
 
 
 class ProjectModelTests(TestCase):
@@ -42,3 +42,39 @@ class ProjectModelTests(TestCase):
     def test_project_name_requires_at_least_two_characters(self) -> None:
         with self.assertRaises(ValidationError):
             ProjectRead(id=1, name="P", slug="project-1")
+
+    def test_project_create_serializes_create_payload_shape(self) -> None:
+        project = ProjectCreate(
+            name="Project 1",
+            description="Demo project",
+            slug="project-1",
+        )
+
+        self.assertEqual(
+            project.model_dump(),
+            {
+                "name": "Project 1",
+                "description": "Demo project",
+                "slug": "project-1",
+            },
+        )
+
+    def test_project_create_requires_name_and_slug(self) -> None:
+        with self.assertRaises(ValidationError):
+            ProjectCreate(description="Missing name and slug")
+
+    def test_project_update_serializes_only_set_fields(self) -> None:
+        update = ProjectUpdate(name="  Project 1 renamed  ")
+
+        self.assertEqual(
+            update.model_dump(exclude_unset=True),
+            {"name": "Project 1 renamed"},
+        )
+
+    def test_project_update_accepts_nullable_description(self) -> None:
+        update = ProjectUpdate(description=None)
+
+        self.assertEqual(
+            update.model_dump(exclude_unset=True),
+            {"description": None},
+        )
