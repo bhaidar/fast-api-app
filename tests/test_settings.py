@@ -31,6 +31,15 @@ class SettingsTests(TestCase):
             "postgresql+psycopg://example:example@localhost:5432/example",
         )
 
+    def test_settings_ignores_empty_database_url_from_env_file(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            env_file = Path(temp_dir) / ".env.postgres"
+            env_file.write_text("DATABASE_URL=\n", encoding="utf-8")
+
+            settings = Settings(_env_file=env_file)
+
+        self.assertEqual(settings.database_url, DEFAULT_DATABASE_URL)
+
     def test_settings_ignores_other_postgres_env_file_values(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             env_file = Path(temp_dir) / ".env.postgres"

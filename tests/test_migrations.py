@@ -88,3 +88,13 @@ class AlembicMigrationTests(TestCase):
 
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assert_creates_projects_table(result.stdout)
+
+    def test_alembic_uses_default_when_env_postgres_has_empty_database_url(
+        self,
+    ) -> None:
+        self.write_env_postgres("")
+
+        result = self.run_alembic("upgrade", "head", "--sql", database_url=None)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assert_creates_projects_table(result.stdout)
