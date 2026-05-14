@@ -1,18 +1,14 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
 
-ProjectData = dict[str, int | str | None]
-
-
-class Project(BaseModel):
-    id: int
-    name: str
-    slug: str | None = None
+from fast_api_app.models import Project
 
 
 app = FastAPI(
     title="FastAPI App", description="A simple FastAPI application", version="1.0.0"
 )
+
+
+ProjectData = dict[str, int | str | None]
 
 
 def mock_database() -> dict[int, ProjectData]:
