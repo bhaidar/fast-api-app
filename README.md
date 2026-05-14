@@ -22,6 +22,7 @@ FastAPI's `TestClient`.
 
 - Python 3.14
 - `uv`
+- Podman, when running the local PostgreSQL development database
 
 The repository pins Python with `.python-version` and `pyproject.toml`:
 
@@ -36,6 +37,59 @@ Sync the project dependencies from `uv.lock`:
 ```bash
 uv sync
 ```
+
+## Local PostgreSQL with Podman
+
+This repository includes helper scripts for running a local PostgreSQL database
+with Podman. The FastAPI app still uses `mock_database()` for endpoint data;
+the database is ready for the next integration step.
+
+Create a local environment file from the safe defaults:
+
+```bash
+cp .env.postgres.example .env.postgres
+```
+
+Start PostgreSQL:
+
+```bash
+scripts/postgres-start.sh
+```
+
+Open `psql` inside the container:
+
+```bash
+scripts/postgres-shell.sh
+```
+
+Stop PostgreSQL without deleting its data:
+
+```bash
+scripts/postgres-stop.sh
+```
+
+The default setup uses:
+
+- Container: `fast-api-app-postgres`
+- Image: `postgres:16`
+- Database: `fastapi_app`
+- User: `fastapi`
+- Password: `fastapi`
+- Host port: `127.0.0.1:5432`
+- Data volume: `fast-api-app-postgres-data`
+
+### Manage the database with TablePlus
+
+Yes, TablePlus is a good choice for managing this local database. Create a new
+PostgreSQL connection with these settings:
+
+| Field | Value |
+| --- | --- |
+| Host | `127.0.0.1` |
+| Port | `5432` |
+| Database | `fastapi_app` |
+| User | `fastapi` |
+| Password | `fastapi` |
 
 ## Run the app
 
@@ -135,6 +189,10 @@ No lint command is configured in `pyproject.toml` yet.
 ├── .github/copilot-instructions.md
 ├── docs/
 │   └── uv-fastapi-package-guide.md
+├── scripts/
+│   ├── postgres-shell.sh
+│   ├── postgres-start.sh
+│   └── postgres-stop.sh
 ├── src/
 │   └── fast_api_app/
 │       ├── __init__.py
@@ -142,6 +200,7 @@ No lint command is configured in `pyproject.toml` yet.
 ├── tests/
 │   ├── __init__.py
 │   └── test_main.py
+├── .env.postgres.example
 ├── pyproject.toml
 ├── uv.lock
 └── README.md
