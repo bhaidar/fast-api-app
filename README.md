@@ -44,6 +44,13 @@ This repository includes helper scripts for running a local PostgreSQL database
 with Podman. The FastAPI app still uses `mock_database()` for endpoint data;
 the database is ready for the next integration step.
 
+From the repository root, start the Podman machine if it is not already
+running:
+
+```bash
+podman machine start
+```
+
 Create a local environment file from the safe defaults:
 
 ```bash
@@ -54,6 +61,12 @@ Start PostgreSQL:
 
 ```bash
 scripts/postgres-start.sh
+```
+
+Verify the database connection:
+
+```bash
+scripts/postgres-shell.sh -c 'select current_database(), current_user;'
 ```
 
 Open `psql` inside the container:
