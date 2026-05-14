@@ -30,19 +30,27 @@ class AlembicMigrationTests(TestCase):
             check=False,
         )
 
-    def test_alembic_requires_database_url(self) -> None:
-        result = self.run_alembic("current", database_url=None)
-
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn(
-            "DATABASE_URL is required to run Alembic migrations",
-            result.stderr,
+    def write_env_postgres(self, database_url: str) -> None:
+        self.env_file = PROJECT_ROOT / ".env.postgres"
+        self.original_env_file = (
+            self.env_file.read_text(encoding="utf-8")
+            if self.env_file.exists()
+            else None
         )
+        self.env_file.write_text(f"DATABASE_URL={database_url}\n", encoding="utf-8")
 
-    def test_offline_upgrade_sql_creates_projects_table(self) -> None:
-        result = self.run_alembic("upgrade", "head", "--sql")
+    def tearDown(self) -> None:
+        env_file = getattr(self, "env_file", None)
+        if env_file is None:
+            return
 
-        self.assertEqual(result.returncode, 0, result.stderr)
+        original_env_file = getattr(self, "original_env_file", None)
+        if original_env_file is None:
+            env_file.unlink(missing_ok=True)
+        else:
+            env_file.write_text(original_env_file, encoding="utf-8")
+
+    def assert_creates_projects_table(self, sql: str) -> None:
         expected_fragments = [
             "CREATE TABLE projects",
             "name VARCHAR NOT NULL",
@@ -57,4 +65,26 @@ class AlembicMigrationTests(TestCase):
 
         for fragment in expected_fragments:
             with self.subTest(fragment=fragment):
-                self.assertIn(fragment, result.stdout)
+                self.assertIn(fragment, sql)
+
+    def test_offline_upgrade_sql_creates_projects_table(self) -> None:
+        result = self.run_alembic("upgrade", "head", "--sql")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assert_creates_projects_table(result.stdout)
+
+    def test_offline_upgrade_sql_uses_default_database_url_without_export(self) -> None:
+        result = self.run_alembic("upgrade", "head", "--sql", database_url=None)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assert_creates_projects_table(result.stdout)
+
+    def test_alembic_loads_database_url_from_env_postgres(self) -> None:
+        self.write_env_postgres(
+            "postgresql+psycopg://envfile:envfile@127.0.0.1:5432/envfile"
+        )
+
+        result = self.run_alembic("upgrade", "head", "--sql", database_url=None)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assert_creates_projects_table(result.stdout)

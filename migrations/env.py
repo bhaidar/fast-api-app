@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-import os
 from logging.config import fileConfig
 
-from alembic import context, util
+from alembic import context
 from sqlalchemy import engine_from_config, pool
 from sqlmodel import SQLModel
 
 import fast_api_app.models  # noqa: F401
+from fast_api_app.settings import get_settings
 
 config = context.config
+config.set_main_option("sqlalchemy.url", get_settings().database_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
@@ -17,16 +18,9 @@ if config.config_file_name is not None:
 target_metadata = SQLModel.metadata
 
 
-def database_url() -> str:
-    url = os.environ.get("DATABASE_URL")
-    if not url:
-        raise util.CommandError("DATABASE_URL is required to run Alembic migrations")
-    return url
-
-
 def run_migrations_offline() -> None:
     context.configure(
-        url=database_url(),
+        url=config.get_main_option("sqlalchemy.url"),
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -38,7 +32,6 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     configuration = config.get_section(config.config_ini_section, {})
-    configuration["sqlalchemy.url"] = database_url()
 
     connectable = engine_from_config(
         configuration,

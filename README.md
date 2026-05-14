@@ -14,6 +14,8 @@ FastAPI's `TestClient`.
 - A mock in-memory project database that returns `ProjectRead` models.
 - SQLModel project table and API schema models in `src/fast_api_app/models.py`.
 - Alembic migrations configured for the SQLModel project table.
+- Central settings in `src/fast_api_app/settings.py` that load the database URL
+  from `.env.postgres`.
 - Endpoint tests for project listing, filtering, lookup, and not-found
   behavior.
 - A guide in `docs/uv-fastapi-package-guide.md` that documents how the project
@@ -130,13 +132,14 @@ still use typed mock data until the database integration is wired into the app.
 ## Database migrations with Alembic
 
 Alembic uses the `Project` SQLModel metadata to manage database schema changes.
-Migration commands require `DATABASE_URL`; the local Podman value is included in
-`.env.postgres.example`.
+Migration commands read `DATABASE_URL` through pydantic-settings. For local
+development, copy `.env.postgres.example` to `.env.postgres`; Alembic loads that
+file automatically.
 
-Export the local database URL:
+Create the local environment file if it does not exist:
 
 ```bash
-export DATABASE_URL=postgresql+psycopg://fastapi:fastapi@127.0.0.1:5432/fastapi_app
+cp .env.postgres.example .env.postgres
 ```
 
 Apply all migrations:
@@ -149,6 +152,12 @@ Show the current migration version:
 
 ```bash
 uv run alembic current
+```
+
+Override the database URL for one command:
+
+```bash
+DATABASE_URL=postgresql+psycopg://fastapi:fastapi@127.0.0.1:5432/fastapi_app uv run alembic upgrade head
 ```
 
 Create a future migration after changing SQLModel table models:
@@ -268,11 +277,14 @@ No lint command is configured in `pyproject.toml` yet.
 │   └── fast_api_app/
 │       ├── __init__.py
 │       ├── models.py
+│       ├── settings.py
 │       └── main.py
 ├── tests/
 │   ├── __init__.py
+│   ├── test_migrations.py
 │   ├── test_main.py
-│   └── test_models.py
+│   ├── test_models.py
+│   └── test_settings.py
 ├── .env.postgres.example
 ├── alembic.ini
 ├── pyproject.toml
