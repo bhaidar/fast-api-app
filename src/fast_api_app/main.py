@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 
-from fast_api_app.models import Project
+from fast_api_app.models import ProjectRead
 
 
 app = FastAPI(
@@ -19,17 +19,17 @@ def mock_database() -> dict[int, ProjectData]:
     }
 
 
-@app.get("/project", response_model=Project)
-def get_project(project_id: int) -> Project:
+@app.get("/project", response_model=ProjectRead)
+def get_project(project_id: int) -> ProjectRead:
     project = mock_database().get(project_id)
     if project is not None:
-        return Project(**project)
+        return ProjectRead(**project)
     raise HTTPException(status_code=404, detail="Project not found")
 
 
-@app.get("/projects", response_model=list[Project])
-def get_projects(slug: str | None = None) -> list[Project]:
-    projects = [Project(**project) for project in mock_database().values()]
+@app.get("/projects", response_model=list[ProjectRead])
+def get_projects(slug: str | None = None) -> list[ProjectRead]:
+    projects = [ProjectRead(**project) for project in mock_database().values()]
     if slug is None:
         return projects
 
