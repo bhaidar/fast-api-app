@@ -22,7 +22,7 @@ class ProjectBase(SQLModel):
 
 
 class ProjectCreate(ProjectBase):
-    slug: str
+    pass
 
 
 class Project(ProjectBase, table=True):
@@ -40,6 +40,7 @@ class ProjectRead(SQLModel):
     id: int
     name: ProjectName
     slug: str | None = None
+    created_at: datetime
 
 
 class ProjectUpdate(SQLModel):

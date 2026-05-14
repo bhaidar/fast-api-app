@@ -1,4 +1,4 @@
-from datetime import UTC
+from datetime import UTC, datetime
 from unittest import TestCase
 
 from pydantic import ValidationError
@@ -8,11 +8,22 @@ from fast_api_app.models import Project, ProjectCreate, ProjectRead, ProjectUpda
 
 class ProjectModelTests(TestCase):
     def test_project_read_serializes_api_response_shape(self) -> None:
-        project = ProjectRead(id=1, name="Project 1", slug="project-1")
+        created_at = datetime(2026, 1, 1, tzinfo=UTC)
+        project = ProjectRead(
+            id=1,
+            name="Project 1",
+            slug="project-1",
+            created_at=created_at,
+        )
 
         self.assertEqual(
             project.model_dump(),
-            {"id": 1, "name": "Project 1", "slug": "project-1"},
+            {
+                "id": 1,
+                "name": "Project 1",
+                "slug": "project-1",
+                "created_at": created_at,
+            },
         )
 
     def test_project_table_metadata(self) -> None:
@@ -35,19 +46,28 @@ class ProjectModelTests(TestCase):
         self.assertIs(project.created_at.tzinfo, UTC)
 
     def test_project_name_strips_whitespace(self) -> None:
-        project = ProjectRead(id=1, name="  Project 1  ", slug="project-1")
+        project = ProjectRead(
+            id=1,
+            name="  Project 1  ",
+            slug="project-1",
+            created_at=datetime(2026, 1, 1, tzinfo=UTC),
+        )
 
         self.assertEqual(project.name, "Project 1")
 
     def test_project_name_requires_at_least_two_characters(self) -> None:
         with self.assertRaises(ValidationError):
-            ProjectRead(id=1, name="P", slug="project-1")
+            ProjectRead(
+                id=1,
+                name="P",
+                slug="project-1",
+                created_at=datetime(2026, 1, 1, tzinfo=UTC),
+            )
 
     def test_project_create_serializes_create_payload_shape(self) -> None:
         project = ProjectCreate(
             name="Project 1",
             description="Demo project",
-            slug="project-1",
         )
 
         self.assertEqual(
@@ -55,13 +75,15 @@ class ProjectModelTests(TestCase):
             {
                 "name": "Project 1",
                 "description": "Demo project",
-                "slug": "project-1",
             },
         )
 
-    def test_project_create_requires_name_and_slug(self) -> None:
+    def test_project_create_excludes_slug_because_it_is_derived_from_name(self) -> None:
+        self.assertNotIn("slug", ProjectCreate.model_fields)
+
+    def test_project_create_requires_name(self) -> None:
         with self.assertRaises(ValidationError):
-            ProjectCreate(description="Missing name and slug")
+            ProjectCreate(description="Missing name")
 
     def test_project_update_serializes_only_set_fields(self) -> None:
         update = ProjectUpdate(name="  Project 1 renamed  ")
