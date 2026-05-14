@@ -13,6 +13,7 @@ FastAPI's `TestClient`.
   `fast_api_app.main:app`.
 - A mock in-memory project database that returns `ProjectRead` models.
 - SQLModel project table and API schema models in `src/fast_api_app/models.py`.
+- Alembic migrations configured for the SQLModel project table.
 - Endpoint tests for project listing, filtering, lookup, and not-found
   behavior.
 - A guide in `docs/uv-fastapi-package-guide.md` that documents how the project
@@ -90,6 +91,8 @@ The default setup uses:
 - Password: `fastapi`
 - Host port: `127.0.0.1:5432`
 - Data volume: `fast-api-app-postgres-data`
+- Migration URL:
+  `postgresql+psycopg://fastapi:fastapi@127.0.0.1:5432/fastapi_app`
 
 ### Manage the database with TablePlus
 
@@ -123,6 +126,36 @@ still use typed mock data until the database integration is wired into the app.
   `slug` are optional.
 - `ProjectRead`: response schema used by the read endpoints, with `id`, `name`,
   `slug`, and `created_at`.
+
+## Database migrations with Alembic
+
+Alembic uses the `Project` SQLModel metadata to manage database schema changes.
+Migration commands require `DATABASE_URL`; the local Podman value is included in
+`.env.postgres.example`.
+
+Export the local database URL:
+
+```bash
+export DATABASE_URL=postgresql+psycopg://fastapi:fastapi@127.0.0.1:5432/fastapi_app
+```
+
+Apply all migrations:
+
+```bash
+uv run alembic upgrade head
+```
+
+Show the current migration version:
+
+```bash
+uv run alembic current
+```
+
+Create a future migration after changing SQLModel table models:
+
+```bash
+uv run alembic revision --autogenerate -m "describe schema change"
+```
 
 ## Run the app
 
@@ -222,6 +255,11 @@ No lint command is configured in `pyproject.toml` yet.
 ├── .github/copilot-instructions.md
 ├── docs/
 │   └── uv-fastapi-package-guide.md
+├── migrations/
+│   ├── env.py
+│   ├── script.py.mako
+│   └── versions/
+│       └── 0001_create_projects_table.py
 ├── scripts/
 │   ├── postgres-shell.sh
 │   ├── postgres-start.sh
@@ -236,6 +274,7 @@ No lint command is configured in `pyproject.toml` yet.
 │   ├── test_main.py
 │   └── test_models.py
 ├── .env.postgres.example
+├── alembic.ini
 ├── pyproject.toml
 ├── uv.lock
 └── README.md
